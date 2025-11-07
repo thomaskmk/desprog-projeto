@@ -183,13 +183,38 @@ Depois, repetimos o mesmo raciocínio para o restante. É assim que o algoritmo 
 Se temos duas sequências de tamanhos diferentes, como poderíamos comparar os últimos caracteres de cada uma delas?
 
 ::: Dica
-Observe os seguintes exemplos de alinhamento e foque nos últimos caracteres: você enxerga algum padrão?
+Observe os seguintes exemplos de alinhamento, baseados na imagem, e foque na **última coluna** de cada um. Você enxerga algum padrão?
 
-:exemplos
+**Exemplo 1:** 
+Sequências: **ATC** e **ATC**
 
+* Alinhamento:
+| | A | T | {red}(C) |
+|:---:|:---:|:---:|:---:|
+| | **A** | **T** | {red}(**C**) |
+
+---
+**Exemplo 2:** 
+Sequências: **TGA** e **TG**
+
+* Alinhamento:
+| | T | G | {red}(A) |
+|:---:|:---:|:---:|:---:|
+| | **T** | **G** | {red}(**-**) |
+
+--- 
+
+
+**Exemplo 3:** 
+Sequências: **CGAC*8 e **CA**
+
+* Alinhamento:
+
+| | C | G | {red}(A) | {red}(**C**) | 
+|:---:|:---:|:---:|
+| | **C** | **A** | {red}(**-**)  | {red}(**-**) | 
 
 :::
-
 ::: Gabarito
 Precisamos considerar a inserção de gaps (-) em uma das sequências para que elas tenham o mesmo tamanho. Dessa forma, devemos considerar as seguintes combinações ao dividir o problema:
 
@@ -226,10 +251,97 @@ Para encontrar o alinhamento ótimo, o algoritmo funciona "do fim para o começo
 
 Existem três possibilidades para a **última coluna** do alinhamento:
 
-1. Alinhar **C** com **G** (um *mismatch*). O resto do problema (o subproblema) é alinhar **AT** com **A**.
-2. Alinhar **C** com um **gap (-)**. O resto do problema é alinhar **AT** com **AG**.
-3. Alinhar um **gap (-)** com **G**. O resto do problema é alinhar **ATC** com **A**.
+Considere as seguintes sequências. Estamos tentando decidir como alinhar o final delas: o {red}(C) da Sequência 1 e o {red}(G) da Sequência 2.
 
+| Sequência 1 | A | T | C |
+|:---:|:---:|:---:|:---:|
+| **Sequência 2** | **A** | **G** | |
+
+
+Para encontrar o alinhamento ótimo, o algoritmo funciona "do fim para o começo". Ele se pergunta: qual é a melhor forma de criar a **última coluna** do alinhamento?
+
+Existem três possibilidades, que são efetivamente os ramos da recursão:
+
+O algoritmo é forçado a explorar **todas as 3 possibilidades**:
+
+---
+
+### Ramo 1:  Alinhar Letra com Letra  ({red}(C) vs {red}(G))
+O algoritmo testa alinhar os dois últimos caracteres.
+
+* **Ação (Última Coluna):**
+
+| Sequência 1 | A | T | {red}(C) |
+|:---:|:---:|:---:|:---:|
+| Sequência 2 | **A** | **G** |**-** |
+
+* **Subproblema Gerado:** O que sobrou para alinhar foi **AT** vs **A**.
+
+---
+
+### Ramo 2: Alinhar Letra 1 com Gap  ({red}(C) vs {red}(-))
+O algoritmo testa alinhar o caractere da Sequência 1 com um gap.
+
+| Sequência 1 | A | T | {red}(C) |
+|:---:|:---:|:---:|:---:|
+| Sequência 2 | **A** | {red}(**G**) |{red}(**-**) |
+
+* **Subproblema Gerado:** O que sobrou foi **AT** vs **AG** (pois o **G** não foi "usado").
+
+---
+
+### Ramo 3:Alinhar Gap com Letra 2  ({red}(-) vs {red}(G))
+O algoritmo testa alinhar um gap com o caractere da Sequência 2.
+
+* **Ação (Última Coluna):**
+   
+| Sequência 1 | A | T | {red}(C) |
+|:---:|:---:|:---:|:---:|
+| Sequência 2 | **A** | {red}(**G**) |**-** |
+
+* **Subproblema Gerado:** O que sobrou foi **ATC** vs **A** (pois o **C** não foi "usado").
+
+---
+<br>
+
+???
+Exercício: Assumindo que temos as seguintes pontuações:
+* Match: +1 
+* Mismatch: -1
+* Gap: -2
+
+Determine a pontuação total para cada uma das três opções (ramos) da recursão ao alinhar as sequências `AG` e `AG`.
+
+::: Gabarito
+
+Para resolver, calculamos a pontuação de cada ramo recursivo, que é o **custo da ação** +  **pontuação ótima** do subproblema.
+
+Isso exige que primeiro saibamos as pontuações ótimas dos subproblemas (calculados recursivamente):
+* `Pontuação("A" vs "A")` = +1 (pois um match é a melhor opção)
+* `Pontuação("A" vs "AG")` = -1 (o alinhamento ótimo é `A-` vs `AG`, com custo `Match(A,A)` + `Gap(-,G)` = +1 + (-2) = -1)
+* `Pontuação("AG" vs "A")` = -1 (o alinhamento ótimo é `AG` vs `A-`, com custo `Match(A,A)` + `Gap(G,-)` = +1 + (-2) = -1)
+
+Agora, podemos calcular a pontuação de cada ramo do problema principal (`AG` vs `AG`):
+
+**Ramo 1: Alinhar Letra com Letra ({red}(G) vs {red}(G))**
+* **Cálculo:** `Custo(Match G,G)` + `Pontuação("A" vs "A")`
+* **Pontuação:** (+1) + (+1) = **+2**
+
+**Ramo 2: Inserir Gap na Seq. 2 ({red}(G) vs {red}(-))**
+* **Cálculo:** `Custo(Gap G,-)` + `Pontuação("A" vs "AG")`
+* **Pontuação:** (-2) + (-1) = **-3**
+
+**Ramo 3: Inserir Gap na Seq. 1 ({red}(-) vs {red}(G))**
+* **Cálculo:** `Custo(Gap -,G)` + `Pontuação("AG" vs "A")`
+* **Pontuação:** (-2) + (-1) = **-3**
+
+O algoritmo escolheria o **Ramo 1**, pois **+2** é a pontuação máxima entre (+2, -3, -3).
+:::
+???
+
+
+
+Ele repete esse processo recursivamente para os subproblemas até que ambas as sequências acabem.
 O algoritmo então escolhe a opção que resulta na maior pontuação total (somando o *score* da escolha atual com o *score* ótimo do subproblema que ela gerou). Ele repete esse processo recursivamente até que ambas as sequências "acabem" (cheguem ao início).
 
 Talvez você esteja se questionando: a recursão é uma boa abordagem para esse problema?
@@ -264,8 +376,6 @@ Para sequências longas, o número de cálculos repetidos cresce exponencialment
 :::
 
 ???
-
----
 
 ## Da Recursão à Programação Dinâmica
 A recursão é ineficiente porque recalcula os mesmos subproblemas **várias vezes**.
