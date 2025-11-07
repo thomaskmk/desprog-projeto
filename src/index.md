@@ -3,23 +3,27 @@ Algoritmo de Needleman-Wunsch
 
 O algoritmo é um método clássico para o alinhamento global de sequências biológicas.  Ele utiliza programação dinâmica para encontrar a melhor correspondência entre duas sequências, considerando penalidades para gaps e recompensas para correspondências.
 
-Antes de avançarmos, vamos entender o que é uma sequência.
+Antes de avançarmos, entenda sequência como uma **cadeia de elementos de um tipo específico**.
 
-Definição de Sequência
+Definição de alinhamento
 ---------------------
 
-Uma sequência é uma série ordenada de elementos, que podem ser letras, números ou símbolos. No contexto da biologia, sequências geralmente se referem a cadeias de nucleotídeos (DNA ou RNA) ou aminoácidos (proteínas). 
+Um alinhamento de sequências é uma transformação que aplicamos a duas (ou mais) sequências para revelar suas regiões de similaridade, o que é particularmente útil para a biologia computacional.
 
-O alinhamento de sequências é o processo de dispor duas ou mais sequências, uma sobre a outra, inserindo lacunas (gaps) onde necessário. O objetivo dessa organização é maximizar a quantidade de **caracteres iguais em cada posição**, que visualmente nos permite **identificar regiões de similaridade**.
+A transformação consiste em **inserir caracteres de lacuna (gap)**, representados por um hífen (-), em qualquer uma das sequências. O objetivo dessa transformação é fazer com que ambas as sequências terminem com o **exatamente o mesmo comprimento**, permitindo uma comparação **caractere a caractere** em cada posição.
+
+<div style="text-align: center;">
+<img src="exemplos/alinhamento.jpg" width="500"/>
+</div>
 
 
-??? Praticando
+??? Exemplo
 
 Considere as seguintes sequências de DNA:
 - Sequência 1: ATCGAGC
 - Sequência 2: ATGAC
 
-Se você pudesse alinhar essas duas sequências, como você faria?
+Forneça um possível alinhamento para as sequências.
 
 ::: Dica
 Busque partes similares entre as sequências e use gaps (-) para alinhá-las.
@@ -27,39 +31,146 @@ Busque partes similares entre as sequências e use gaps (-) para alinhá-las.
 
 ::: Gabarito
 
-- Sequência 1: ATCGAGC
-- Sequência 2: AT-GA-C
+```
+ATCGAGC
+AT-GA-C
+```
 
-!!! Atenção
+!!! Lembre-se
 Após o alinhamento, sempre teremos duas sequências de mesmo comprimento.
 !!!
-
-Para sequências curtas como essas, podemos fazer o alinhamento manualmente. Mas e se a sequência fosse muito maior? Como poderíamos automatizar esse processo?
 :::
 
 ???
 
+## Múltiplas Possibilidades
+Talvez você tenha se perguntado por citamos **"...um possível alinhamento..."**. É crucial entender que, para qualquer par de sequências, existem múltiplos alinhamentos possíveis. A **forma como inserimos os gaps** muda o alinhamento.
 
-Antes de avançarmos para o algoritmo, é importante entender por que o alinhamento de sequências é uma ferramenta crucial na biologia computacional. 
+??? Exemplo
+Para as mesmas sequências do exemplo anterior, podemos propor o seguinte alinhamento:
+```
+ATCGAGC--
+AT-G-A--C
+```
+???
+Note que as sequências continuam com o **mesmo tamanho**, mas alinhadas de maneira diferente. O ponto chave aqui é entender que alinhar as sequências é encontrar a disposição que gera o **maior número de correspondências** quando comparamos elemento a elemento.
 
-??? Reflexão
+??? Exercício
+Considere as seguintes sequências de DNA:
+- Sequência 1: GATTA
+- Sequência 2: GCA
 
-Como os cientistas desenvolvem vacinas eficazes contra vírus que estão constantemente mutando, como o SARS-CoV-2 e o Influenza?
-
-::: Dica
-O DNA dos vírus possuem regiões que mudam com frequência e outras que permanecem relativamente estáveis ao longo do tempo. Pense em como essas regiões podem influenciar o desenvolvimento de vacinas.
-:::
+Forneça três alinhamentos **diferentes** e válidos para este par.
 
 ::: Gabarito
+Existem dezenas de possibilidades. Aqui estão alguns exemplos:
+```
+GATTA
+GC-A-
 
-Os pesquisadores precisam identificar quais partes do DNA do vírus permanecem iguais entre diferentes variantes (as chamadas regiões conservadas).
-Essas regiões são as melhores candidatas para alvos de vacinas, pois, se não mudam, uma vacina baseada nelas continua eficaz mesmo após mutações.
+GATTA
+G-C-A
 
-O algoritmo de Needleman-Wunsch nos ajuda a alinhar sequências de DNA viral de diferentes variantes, permitindo que os cientistas identifiquem essas regiões conservadas de forma eficiente e precisa.
-
+G-ATTA
+G-C--A
+```
+:::
 ???
 
-Agora que entendemos o que são sequências e a importância do seu alinhamento, vamos explorar a ideia do algoritmo de alinhamento de sequências.
+Para sequências curtas como essas, podemos fazer o alinhamento manualmente. Mas se a sequência for maior, fazer "no olho" se torna inviável. Precisamos de uma metodologia sistemática para encontrar o melhor alinhamento possível.
+
+## Metrificando Alinhamentos: O Sistema de Pontuação
+!!! Atencão
+Antes de iniciar, é crucial entender que no processo de alinhamento, comparam-se os elementos da sequência **posição por posição**. Ou seja, se colocarmos uma sequência "em cima" da outra, comparamos **verticalmente** os elementos na primeira posição, depois na segunda, enfim...
+<div style="text-align: center;">
+<img src="exemplos/posicao-posicao.png" width="350"/>
+</div>
+!!!
+
+Na seção anterior, vimos que existem muitos alinhamentos possíveis. Como podemos **decidir objetivamente** qual alinhamento é "melhor" ou "mais significativo"?
+
+Fazemos isso através de um **sistema de pontuação** (ou custo). Atribuímos um **valor numérico** a cada tipo de comparação, posição por posição, onde existem três possibilidades:
+
+- **Match (Correspondência)**: Os caracteres na mesma posição são idênticos (ex: A e A).
+
+- **Mismatch (Não-correspondência)**: Os caracteres na mesma posição são diferentes (ex: T e C).
+
+- **Gap (Lacuna)**: Um caractere é alinhado com um gap (-).
+
+Exemplos:
+```
+A
+    (match)
+A
+----------
+A
+    (mismatch)
+G
+----------
+A
+    (gap)
+-
+```
+
+Os valores de exatos de cada possibilidade são **parâmetros definidos pelo usuário** ou pela aplicação específica. Por exemplo, podemos definir:
+- **Match**: +1
+- **Mismatch**: -1
+- **Gap**: -2
+
+O custo total é simplesmente a soma dos valores atribuídos a cada posição do alinhamento. Dessa forma, o "melhor alinhamento" é aquele que resulta na **maior pontuação total**.
+
+??? Exercício: calculando custos
+Considerando as sequências do exemplo anterior:
+```
+GATTA
+GCA
+```
+
+Calcule o custo total para os seguintes alinhamentos de acordo com o sistema definido acima e responda: qual deles é o melhor alinhamento?
+
+**Alinhamento 1:**
+```
+GATTA
+GC-A-
+```
+
+**Alinhamento 2:**
+```
+GATTA
+G-C-A
+```
+
+::: Gabarito
+Alinhamento 1:
+```
+Posição: 1   2   3   4   5
+-----------------------------
+Seq A:   G   A   T   T   A
+Seq B:   G   C   -   A   -
+-----------------------------
+Score:  +1  -1  -2  -1  -2
+```
+**Score total: -5**
+
+Alinhamento 2:
+```
+Posição: 1   2   3   4   5
+-----------------------------
+Seq A:   G   A   T   T   A
+Seq B:   G   -   C   -   A
+-----------------------------
+Score:  +1  -2  -1  -2  +1
+```
+**Score total: -3**
+
+O melhor alinhamento é o **Alinhamento 2**, com um score total de -3.
+
+:::
+???
+
+
+
+---
 
 Alinhamento por Recursão
 ---------------------
