@@ -1,46 +1,192 @@
 Algoritmo de Needleman-Wunsch
 ======
 
-O algoritmo é um método clássico para o alinhamento global de sequências biológicas.  Ele utiliza programação dinâmica para encontrar a melhor correspondência entre duas sequências, considerando penalidades para gaps e recompensas para correspondências.
+O algoritmo de estudo é um método clássico para o alinhamento global de sequências biológicas.  Ele utiliza programação dinâmica para encontrar a melhor correspondência entre duas sequências, considerando penalidades para gaps e recompensas para correspondências.
 
-Antes de avançarmos, vamos entender o que é uma sequência.
+Antes de avançarmos para sua definição rigorosa vamos entender o que é uma sequência.
 
 Definição de Sequência
 ---------------------
 
 Uma sequência é uma série ordenada de elementos, que podem ser letras, números ou símbolos. No contexto da biologia, sequências geralmente se referem a cadeias de nucleotídeos (DNA ou RNA) ou aminoácidos (proteínas). 
 
-O alinhamento de sequências é o processo de dispor duas ou mais sequências, uma sobre a outra, inserindo lacunas (gaps) onde necessário. O objetivo dessa organização é maximizar a quantidade de **caracteres iguais em cada posição**, que visualmente nos permite **identificar regiões de similaridade**.
+O alinhamento de sequências é o processo de dispor duas ou mais sequências, uma sobre a outra, inserindo lacunas (gaps) onde necessário. O objetivo dessa organização é maximizar a quantidade de **caracteres iguais em cada posição**, que visualmente nos permite **identificar regiões de similaridade**. 
+
+Para cada sequência que caracteres, podemos fazer varios alinhamentos possíveis. 
+Por exemplo, para as sequências de DNA, **GATTACA** **GATCA**, observe os diferentes alinhamentos possíveis:
+
+: diferentes_alinhamentos
+
+Dessa forma, já ficou mais visualizavel que existem diversas maneiras de alinhar duas sequências.
 
 
 ??? Praticando
 
 Considere as seguintes sequências de DNA:
-- Sequência 1: ATCGAGC
-- Sequência 2: ATGAC
+- Sequência 1: ```A T C G A G C```
+- Sequência 2: ```A T G A C```
 
-Se você pudesse alinhar essas duas sequências, como você faria?
+Se você pudesse alinhar essas duas sequências de três maneiras diferentes, como você faria?
 
 ::: Dica
-Busque partes similares entre as sequências e use gaps (-) para alinhá-las.
+Lembre-se, um alinhamento é válido desde que as duas sequências resultantes tenham o **mesmo comprimento** final. Tente inserir os gaps {red}(-) em locais diferentes.
 :::
 
 ::: Gabarito
 
-- Sequência 1: ATCGAGC
-- Sequência 2: AT-GA-C
+Existem muitas formas válidas! O importante é que ambas as sequências terminem com o mesmo comprimento. Aqui estão três exemplos possíveis:
+
+**Opção 1:**
+- Sequência 1: A T C G A G C
+- Sequência 2: A T {red}(-) G A {red}(-) C
+
+**Opção 2:**
+- Sequência 1: A T C G A G C
+- Sequência 2: A T G A C {red}(-) {red}(-)
+
+**Opção 3:**
+- Sequência 1: A T C G A G C 
+- Sequência 2: {red}(-) {red}(-) A T G A C
 
 !!! Atenção
-Após o alinhamento, sempre teremos duas sequências de mesmo comprimento.
-!!!
+Note que todas as 3 opções são alinhamentos **válidos**. Em cada uma delas, as duas sequências terminam com o mesmo comprimento (neste caso, 7).
 
-Para sequências curtas como essas, podemos fazer o alinhamento manualmente. Mas e se a sequência fosse muito maior? Como poderíamos automatizar esse processo?
+Isso nos mostra que existem muitos alinhamentos possíveis, o que nos levará à próxima pergunta: "Como definimos qual deles é o **melhor**?"
+!!!
+:::
+???
+
+Bom, agora que está claro o que é um alinhamento e como ele é feito, é necessário explicar a maneira que o algoritmo ultiliza a matemática a seu favor para encontrar o melhor alinhamento possível dentro dessas sequencias.
+
+Isso é feito  através de um sistema de pontuação genérico. Basicamente olhamos caráctere por caráctere e atribuímos uma pontuação baseada em três critérios:
+
+- **Match** (Correspondência): quando os caracteres são iguais. Exemplo: A vs A
+Cenário em que somamos um valor positivo à pontuação do alinhamento.
+
+- **Mismatch** (Diferença): quando os caracteres são diferentes. Exemplo: A vs G
+Pior cenário em que subtraímos um valor significativo da pontuação do alinhamento.
+
+- **Gap** (Lacuna): quando um caractere é alinhado com um gap. Exemplo: A vs -
+Cenário considerado ruim e também que subtraímos um valor moderado da pontuação do alinhamento.
+
+Agora, você já é capaz de entender como o algoritmo avalia cada alinhamento possível entre duas sequências. Mas você pode estar se perguntando como o algoritmo escolhe esse sistema de pontuação. Esse ponto é bastante importante, pois pode causar confusão. 
+
+
+Para que os pontos sejam definidos, é importante esclarecer que são **apenas** parâmetros, ou seja, são apenas valores que podemos ajustar da maneira que quisermos servindo para qualquer caso, com quaisquer valores. No entanto, precisamos ter em mente que:
+
+- {green}(**Matches**) devem ter pontuações {green}(**positivas**).
+- {yellow}(**Gaps**) devem ter pontuações negativas, mas {yellow}(menos negativas) que mismatches.
+- {red}(**Mismatches**) devem ter as pontuações {red}(mais negativas).
+
+
+Por exemplo, uma configuração comum de pontuação é:
+- Match: +2
+- Mismatch: -3
+- Gap: -1
+
+Então, um exemplo de uma soma seria: 
+
+??? Atividade
+
+Considere as sequências `Seq 1: AGTC` e `Seq 2: ATC`.
+Para esta atividade, use o seguinte sistema de pontuação:
+* {green}(**Match**): +2
+* {yellow}(**Gap**): -1
+* {red}(**Mismatch**): -3
+
+
+Calcule a pontuação total para cada um dos três alinhamentos abaixo.
+
+**Alinhamento A:**
+
+|| A | G | T | C |
+|:---:|:---:|:---:|:---:|
+|| **A** | **-** | **T** | **C** |
+
+**Alinhamento B:**
+
+|| A | G | T | C |
+|:---:|:---:|:---:|:---:|
+|| **A** | **T** | **C** |**-** |
+
+
+**Alinhamento C:**
+
+|| A | G | T | C |
+|:---:|:---:|:---:|:---:|
+|| **-** | **A**| **T** | **C** |
+
+::: Dica
+A soma vai ser calculada pela comparação de cada caractere.
 :::
 
+::: Gabarito
+
+* **Alinhamento A (```AGTC``` vs ```A-TC```)**
+    * A vs A (Match): +2
+    * G vs - (Gap): -1
+    * T vs T (Match): +2
+    * C vs C (Match): +2
+    * **Total:** (+2) + (-1) + (+2) + (+2) = **+5**
+
+* **Alinhamento B (```AGTC``` vs ```ATC-```)**
+    * A vs A (Match): +2
+    * G vs T (Mismatch): -3
+    * T vs C (Mismatch): -3
+    * C vs - (Gap): -1
+    * **Total:** (+2) + (-3) + (-3) + (-1) = **-5**
+
+* **Alinhamento C (```AGTC``` vs ```-ATC```)**
+    * A vs - (Gap): -1
+    * G vs A (Mismatch): -3
+    * T vs T (Match): +2
+    * C vs C (Match): +2
+    * **Total:** (-1) + (-3) + (+2) + (+2) = **0**
+:::
 ???
 
 
-Antes de avançarmos para o algoritmo, é importante entender por que o alinhamento de sequências é uma ferramenta crucial na biologia computacional. 
+??? Checkpoint
+
+Usando o **mesmo sistema de pontuação** da atividade passada, analise os dois alinhamentos abaixo para a sequência
+
+| Sequência 1 | A | T | C |
+|:---:|:---:|:---:|:---:|
+| **Sequência 2** | **A** | **G** | |
+
+
+Qual dos dois alinhamentos, X ou Y, possui o **melhor custo**?
+
+**Alinhamento X:**
+
+|| G | A | - |
+|:---:|:---:|:---:|:---:|
+|| **G** | **A** | **T** |
+
+
+**Alinhamento Y:**
+
+|| - | G | A |
+|:---:|:---:|:---:|:---:|
+|| **G** | **A** | **T** |
+
+
+
+::: Dica
+Lembre-se, o "melhor" custo é o que resulta na **maior** pontuação final.
+:::
+
+::: Gabarito
+
+* **Alinhamento X:** (`G` vs `G`) + (`A` vs `A`) + (`-` vs `T`) = (+2) + (+2) + (-1) = **+3**
+* **Alinhamento Y:** (`-` vs `G`) + (`G` vs `A`) + (`A` vs `T`) = (-1) + (-3) + (-3) = **-7**
+
+O **Alinhamento X** é o melhor, pois +3 é maior que -7.
+:::
+???
+
+Agora, já temos uma boa intuição de como o alinhamento de sequências funciona e como a pontuação para a melhor sequência é calculada. Agora, pode estar surgindo o questionamento: "Por que usar isso é especialmente útil e por que precisamos estudar um algoritmo para isso?"
+
 
 ??? Reflexão
 
@@ -59,51 +205,18 @@ O algoritmo de Needleman-Wunsch nos ajuda a alinhar sequências de DNA viral de 
 
 ???
 
-Agora que entendemos o que são sequências e a importância do seu alinhamento, vamos explorar a ideia do algoritmo de alinhamento de sequências.
+Bom, para sequências curtas como essas que trabalhamos nos exemplos, podemos fazer o alinhamento manualmente. Mas e se a sequência tivesse milhões de caractéres (no caso da biologia, bases nitrogenadas), como poderíamos automatizar esse processo?
+
+Aqui surge a necessidade de um algoritmo eficiente para alinhar sequencias e que seja capaz de lidar com uma alta complexidade computacional. Por isso, estudamos o algoritmo de **Needleman-Wunsch**.
+
+
 
 Alinhamento por Recursão
 ---------------------
-O alinhamento de sequências pode ser abordado de forma recursiva, onde o problema maior é dividido em **subproblemas menores**.
+A cada etapa feita nos processos passados da ultima seção, talvez não tenha ficado claro, mas durante todo o tempo, efetivamente, estavamos fazendo uma recursão. Isto é, estavamos alinhando as sequências de forma que o problema maior é dividido em **subproblemas menores**.
 
 Para alinhar duas sequências, podemos começar do fim: comparar os últimos caracteres e decidir o que fazer com eles.
 Depois, repetimos o mesmo raciocínio para o restante. É assim que o algoritmo divide o problema em partes menores.
-
-??? Atividade 
-Se temos duas sequências de tamanhos diferentes, como poderíamos comparar os últimos caracteres de cada uma delas?
-
-::: Dica
-Observe os seguintes exemplos de alinhamento e foque nos últimos caracteres: você enxerga algum padrão?
-
-:exemplos
-
-
-:::
-
-::: Gabarito
-Precisamos considerar a inserção de gaps (-) em uma das sequências para que elas tenham o mesmo tamanho. Dessa forma, devemos considerar as seguintes combinações ao dividir o problema:
-
-- Comparar o caractere de ambas as sequências (caso ambas as sequências tenham o mesmo tamanho).
-- Comparar o caractere da primeira sequência com um gap na segunda sequência (caso a primeira sequencia seja maior que a segunda).
-- Comparar um gap na primeira sequência com o caractere da segunda sequência (caso a segunda sequência seja maior que a primeira).
-
-Mas agora surge uma nova questão:
-essas três opções não são equivalentes — algumas trazem correspondência, outras causam penalidade.
-Para escolher a melhor, precisamos atribuir pontuações a cada tipo de comparação.
-
-!!! Importante
-Para decidir qual dessas três opções é a melhor, precisamos atribuir uma pontuação a cada uma delas.
-
-- Match → ganho
-- Mismatch → perda
-- Gap → penalidade
-
-Essa pontuação nos ajuda a quantificar o quão bom é um alinhamento específico, e será fundamental para o funcionamento do algoritmo de Needleman-Wunsch.
-
-!!!
-
-:::
-
-???
 
 Muito abstrato? Vamos exemplificar.
 
@@ -115,10 +228,97 @@ Para encontrar o alinhamento ótimo, o algoritmo funciona "do fim para o começo
 
 Existem três possibilidades para a **última coluna** do alinhamento:
 
-1. Alinhar **C** com **G** (um *mismatch*). O resto do problema (o subproblema) é alinhar **AT** com **A**.
-2. Alinhar **C** com um **gap (-)**. O resto do problema é alinhar **AT** com **AG**.
-3. Alinhar um **gap (-)** com **G**. O resto do problema é alinhar **ATC** com **A**.
+Considere as seguintes sequências. Estamos tentando decidir como alinhar o final delas: o {red}(C) da Sequência 1 e o {red}(G) da Sequência 2.
 
+| Sequência 1 | A | T | C |
+|:---:|:---:|:---:|:---:|
+| **Sequência 2** | **A** | **G** | |
+
+
+Para encontrar o alinhamento ótimo, o algoritmo funciona "do fim para o começo". Ele se pergunta: qual é a melhor forma de criar a **última coluna** do alinhamento?
+
+Existem três possibilidades, que são efetivamente os ramos da recursão:
+
+O algoritmo é forçado a explorar **todas as 3 possibilidades**:
+
+---
+
+### Ramo 1:  Alinhar Letra com Letra  ({red}(C) vs {red}(G))
+O algoritmo testa alinhar os dois últimos caracteres.
+
+* **Ação (Última Coluna):**
+
+| Sequência 1 | A | T | {red}(C) |
+|:---:|:---:|:---:|:---:|
+| Sequência 2 | **A** | **G** |**-** |
+
+* **Subproblema Gerado:** O que sobrou para alinhar foi **AT** vs **A**.
+
+---
+
+### Ramo 2: Alinhar Letra 1 com Gap  ({red}(C) vs {red}(-))
+O algoritmo testa alinhar o caractere da Sequência 1 com um gap.
+
+| Sequência 1 | A | T | {red}(C) |
+|:---:|:---:|:---:|:---:|
+| Sequência 2 | **A** | {red}(**G**) |{red}(**-**) |
+
+* **Subproblema Gerado:** O que sobrou foi **AT** vs **AG** (pois o **G** não foi "usado").
+
+---
+
+### Ramo 3:Alinhar Gap com Letra 2  ({red}(-) vs {red}(G))
+O algoritmo testa alinhar um gap com o caractere da Sequência 2.
+
+* **Ação (Última Coluna):**
+   
+| Sequência 1 | A | T | {red}(C) |
+|:---:|:---:|:---:|:---:|
+| Sequência 2 | {red}(**-**)| **A** | {red}(**G**) |
+
+* **Subproblema Gerado:** O que sobrou foi **ATC** vs **A** (pois o **C** não foi "usado").
+
+---
+<br>
+
+???
+Exercício: Assumindo que temos as seguintes pontuações:
+* Match: +1 
+* Mismatch: -1
+* Gap: -2
+
+Determine a pontuação total para cada uma das três opções (ramos) da recursão ao alinhar as sequências `AG` e `AG`.
+
+::: Gabarito
+
+Para resolver, calculamos a pontuação de cada ramo recursivo, que é o **custo da ação** +  **pontuação ótima** do subproblema.
+
+Isso exige que primeiro saibamos as pontuações ótimas dos subproblemas (calculados recursivamente):
+* `Pontuação("A" vs "A")` = +1 (pois um match é a melhor opção)
+* `Pontuação("A" vs "AG")` = -1 (o alinhamento ótimo é `A-` vs `AG`, com custo `Match(A,A)` + `Gap(-,G)` = +1 + (-2) = -1)
+* `Pontuação("AG" vs "A")` = -1 (o alinhamento ótimo é `AG` vs `A-`, com custo `Match(A,A)` + `Gap(G,-)` = +1 + (-2) = -1)
+
+Agora, podemos calcular a pontuação de cada ramo do problema principal (`AG` vs `AG`):
+
+**Ramo 1: Alinhar Letra com Letra ({red}(G) vs {red}(G))**
+* **Cálculo:** `Custo(Match G,G)` + `Pontuação("A" vs "A")`
+* **Pontuação:** (+1) + (+1) = **+2**
+
+**Ramo 2: Inserir Gap na Seq. 2 ({red}(G) vs {red}(-))**
+* **Cálculo:** `Custo(Gap G,-)` + `Pontuação("A" vs "AG")`
+* **Pontuação:** (-2) + (-1) = **-3**
+
+**Ramo 3: Inserir Gap na Seq. 1 ({red}(-) vs {red}(G))**
+* **Cálculo:** `Custo(Gap -,G)` + `Pontuação("AG" vs "A")`
+* **Pontuação:** (-2) + (-1) = **-3**
+
+O algoritmo escolheria o **Ramo 1**, pois **+2** é a pontuação máxima entre (+2, -3, -3).
+:::
+???
+
+
+
+Ele repete esse processo recursivamente para os subproblemas até que ambas as sequências acabem.
 O algoritmo então escolhe a opção que resulta na maior pontuação total (somando o *score* da escolha atual com o *score* ótimo do subproblema que ela gerou). Ele repete esse processo recursivamente até que ambas as sequências "acabem" (cheguem ao início).
 
 Talvez você esteja se questionando: a recursão é uma boa abordagem para esse problema?
