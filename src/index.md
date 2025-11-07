@@ -265,6 +265,110 @@ Para sequências longas, o número de cálculos repetidos cresce exponencialment
 
 ???
 
+---
+
+## Da Recursão à Programação Dinâmica
+A recursão é ineficiente porque recalcula os mesmos subproblemas **várias vezes**.
+
+E se pudéssemos armazenar o resultado de um subproblema (como Score("AT", "A")) na primeira vez que o calculamos? Da próxima vez que precisarmos dele, em vez de recalcular, nós simplesmente **consultaríamos o valor salvo**.
+
+E isso é a base da **programação dinâmica**, resolver um problema recursivo, mas **"memorizando" (cacheando)** as soluções dos subproblemas. Mas isso leva à questão: como armazenar essas soluções?
+
+??? Atividade: Mapeando os Subproblemas
+Nossa função recursiva `score(S1, S2)` é chamada com **vários sufixos (trechos)** das sequências originais. Olhando isso de outra forma, a função é chamada com **todos os prefixos das sequências**:
+
+- Prefixos de "ATC" (Seq 1):
+```
+"", "A", "AT", "ATC" 
+```
+(4 possibilidades)
+
+- Prefixos de "AG" (Seq 2): 
+```
+"", "A", "AG" 
+```
+(3 possibilidades)
+
+**Qualquer subproblema** que precisamos calcular é uma **combinação** de um prefixo da primeira sequência com outro da segunda.
+
+Ou seja, precisamos da estrutura de dados em que podemos armazenar **um valor para cada combinação** possível de prefixos. **Qual estrutura é essa**?
+
+::: Dica
+Lembre-se de uma tabela de duas dimensões
+:::
+
+::: Gabarito
+A estrutura mais natural para organizar dados baseados em duas "chaves" (índice da Seq 1 e índice da Seq 2) é uma **matriz** (mais especificamente uma **matriz de cache** nesse caso)
+
+- As linhas da matriz podem representar os prefixos de "ATC".
+
+- As colunas da matriz podem representar os prefixos de "AG"
+
+Vamos criar uma matriz `M` onde cada célula `M[i][j]` vai armazenar a pontuação máxima do alinhamento entre:
+- Os primeiros i caracteres da Sequência 1
+
+- Os primeiros j caracteres da Sequência 2
+???
+
+Com isso definido, responda:
+
+??? Exercício
+Considere as seguintes sequências:
+- Sequência 1: ATC
+- Sequência 2: AG
+
+Quais as dimensões da estrutura de dados utilizada para armazenar as pontuações?
+
+::: Dica
+Lembre-se que o prefixo vazio é uma possibilidade
+:::
+
+::: Gabarito
+Precisariamos de uma matriz (3 + 1) linhas por (2 + 1) colunas. O +1 é considerando o caso do prefixo vazio.
+:::
+???
+
+## A matriz de pontuação: casos base
+Como estabelecido anteriormente, matriz vai armazenar a pontuação de cada **combinação de prefixos**. Para preenchê-la, vamos começar com os casos triviais: os casos base da recursão.
+
+**Caso Base 1: ScoreMatrix[0][0]**
+
+Significado: Qual o score de alinhar **""** (prefixo de tamanho 0) com **""** (prefixo de tamanho 0)?
+
+Resposta: 0.
+
+**Caso Base 2: A Primeira Linha (ScoreMatrix[0][j])**
+
+Significado: Qual o score de alinhar **""** com **"A"**, ou **""** com **"AG"**?
+
+Resposta: Para alinhar "AG" (prefixo de tamanho 2) com uma string vazia, o único alinhamento possível é:
+
+```
+--
+AG
+```
+
+Cálculo: Isso são 2 gaps. Se a penalidade de gap é -2, os scores da primeira linha serão: 0, -2, -4, ...
+
+Lógica: `ScoreMatrix[0][j] = ScoreMatrix[0][j-1] + custo_gap`
+
+**Caso Base 3: A Primeira Coluna (ScoreMatrix[i][0])**
+
+Significado: Qual o score de alinhar **"A"** ou **"AT"** com **""**?
+
+Resposta: O mesmo raciocínio. Para alinhar "AT":
+
+```
+AT
+--
+```
+
+Cálculo: Isso também são 2 gaps. Os scores da primeira coluna serão: 0, -2, -4, ...
+
+Lógica: `ScoreMatrix[i][0] = ScoreMatrix[i-1][0] + custo_gap`
+
+Veja como a inicialização da matriz (que antes parecia uma "regra" arbitrária) é, na verdade, apenas a solução lógica para os casos base da recursão.
+
 Algoritmo de Needleman-Wunsch
 ---
 Como vimos na seção anterior, a complexidade do algoritmo recursivo torna-o impraticável para sequências maiores.
@@ -295,12 +399,6 @@ O exemplo pode esclarecer melhor:
 </div>
 
 
-Mas espere, e quanto ao segundo bullet point, ainda não ficou claro, né?
-
-Infelizmente, você faz engenharia e nada vem tão simples. 
-
-Assim, vou propor duas reflexões especialmente importantes: 
-
 ??? Reflexão 1
 
 Qual o motivo de existirem essas três setas que vem da diagonal, da esquerda e do topo, como mostrado na ultima figura para o cálculo da pontuação?
@@ -316,24 +414,6 @@ O motivo para fazermos isso é o fato de estarmos buscando pela maior pontuaçã
 
 ???
 
-??? Reflexão 2
-
-Qual o motivo de inicializarmos a matriz de alinhamento com esses valores nas linhas e nas colunas? 
-
-<div style="text-align: center;">
-<img src="exemplos/pesos.png" width="300"/>
-</div>
-
-
-::: Dica
-Qual o custo de alinhar uma sequência qualquer de *m* caracteres com uma sequência vazia?
-:::
-
-::: Gabarito 
-A inicialização da matriz com penalidades de gap cumulativas não é arbitrária. Ela é a solução de Programação Dinâmica para os casos base.
-:::
-
-???
 
 ??? Exemplo
 A sequência de imagens a seguir representa o preenchimento da matriz das sequências **ATCGAGC** e **ATGAC** utilizando o algoritmo de Needleman-Wunsch com as seguintes pontuações:
