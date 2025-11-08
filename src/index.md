@@ -17,7 +17,7 @@ Por exemplo, para as sequências de DNA, **GATTACA** **GATCA**, observe os difer
 
 : diferentes_alinhamentos
 
-Dessa forma, já ficou mais visualizavel que existem diversas maneiras de alinhar duas sequências.
+Dessa forma, já ficou mais visível que existem diversas maneiras de alinhar duas sequências.
 
 
 ??? Praticando
@@ -64,10 +64,11 @@ Isso é feito  através de um sistema de pontuação genérico. Basicamente olha
 Cenário em que somamos um valor positivo à pontuação do alinhamento.
 
 - **Mismatch** (Diferença): quando os caracteres são diferentes. Exemplo: A vs G
-Pior cenário em que subtraímos um valor significativo da pontuação do alinhamento.
+Cenário considerado ruim e também que subtraímos um valor moderado da pontuação do alinhamento.
 
 - **Gap** (Lacuna): quando um caractere é alinhado com um gap. Exemplo: A vs -
-Cenário considerado ruim e também que subtraímos um valor moderado da pontuação do alinhamento.
+Pior cenário em que subtraímos um valor significativo da pontuação do alinhamento.
+
 
 Agora, você já é capaz de entender como o algoritmo avalia cada alinhamento possível entre duas sequências. Mas você pode estar se perguntando como o algoritmo escolhe esse sistema de pontuação. Esse ponto é bastante importante, pois pode causar confusão. 
 
@@ -75,14 +76,14 @@ Agora, você já é capaz de entender como o algoritmo avalia cada alinhamento p
 Para que os pontos sejam definidos, é importante esclarecer que são **apenas** parâmetros, ou seja, são apenas valores que podemos ajustar da maneira que quisermos servindo para qualquer caso, com quaisquer valores. No entanto, precisamos ter em mente que:
 
 - {green}(**Matches**) devem ter pontuações {green}(**positivas**).
-- {yellow}(**Gaps**) devem ter pontuações negativas, mas {yellow}(menos negativas) que mismatches.
-- {red}(**Mismatches**) devem ter as pontuações {red}(mais negativas).
+- {yellow}(**Mismatches**) devem ter as pontuações {yellow}(menos negativas) que gaps.
+- {red}(**Gaps**) devem ter pontuações negativas, mas {red}(mais negativas).
 
 
 Por exemplo, uma configuração comum de pontuação é:
 - Match: +2
-- Mismatch: -3
-- Gap: -1
+- Mismatch: -1
+- Gap: -3
 
 Então, um exemplo de uma soma seria: 
 
@@ -91,8 +92,8 @@ Então, um exemplo de uma soma seria:
 Considere as sequências `Seq 1: AGTC` e `Seq 2: ATC`.
 Para esta atividade, use o seguinte sistema de pontuação:
 * {green}(**Match**): +2
-* {yellow}(**Gap**): -1
-* {red}(**Mismatch**): -3
+* {yellow}(**Mismatch**): -1
+* {red}(**Gap**): -3
 
 
 Calcule a pontuação total para cada um dos três alinhamentos abaixo.
@@ -124,24 +125,24 @@ A soma vai ser calculada pela comparação de cada caractere.
 
 * **Alinhamento A (```AGTC``` vs ```A-TC```)**
     * A vs A (Match): +2
-    * G vs - (Gap): -1
+    * G vs - (Gap): -3
     * T vs T (Match): +2
     * C vs C (Match): +2
-    * **Total:** (+2) + (-1) + (+2) + (+2) = **+5**
+    * **Total:** (+2) + (-3) + (+2) + (+2) = **+3**
 
 * **Alinhamento B (```AGTC``` vs ```ATC-```)**
     * A vs A (Match): +2
-    * G vs T (Mismatch): -3
-    * T vs C (Mismatch): -3
-    * C vs - (Gap): -1
-    * **Total:** (+2) + (-3) + (-3) + (-1) = **-5**
+    * G vs T (Mismatch): -1
+    * T vs C (Mismatch): -1
+    * C vs - (Gap): -3
+    * **Total:** (+2) + (-1) + (-1) + (-3) = **-3**
 
 * **Alinhamento C (```AGTC``` vs ```-ATC```)**
-    * A vs - (Gap): -1
-    * G vs A (Mismatch): -3
+    * A vs - (Gap): -3
+    * G vs A (Mismatch): -1
     * T vs T (Match): +2
     * C vs C (Match): +2
-    * **Total:** (-1) + (-3) + (+2) + (+2) = **0**
+    * **Total:** (-3) + (-1) + (+2) + (+2) = **0**
 :::
 ???
 
@@ -178,11 +179,17 @@ Lembre-se, o "melhor" custo é o que resulta na **maior** pontuação final.
 
 ::: Gabarito
 
-* **Alinhamento X:** (`G` vs `G`) + (`A` vs `A`) + (`-` vs `T`) = (+2) + (+2) + (-1) = **+3**
-* **Alinhamento Y:** (`-` vs `G`) + (`G` vs `A`) + (`A` vs `T`) = (-1) + (-3) + (-3) = **-7**
+* **Alinhamento X:** (`G` vs `G`) + (`A` vs `A`) + (`-` vs `T`)
+    * (Match) + (Match) + (Gap)
+    * (+2) + (+2) + (-3) = **+1**
 
-O **Alinhamento X** é o melhor, pois +3 é maior que -7.
+* **Alinhamento Y:** (`-` vs `G`) + (`G` vs `A`) + (`A` vs `T`)
+    * (Gap) + (Mismatch) + (Mismatch)
+    * (-3) + (-1) + (-1) = **-5**
+
+O **Alinhamento X** é o melhor, pois +1 é maior que -5.
 :::
+
 ???
 
 Agora, já temos uma boa intuição de como o alinhamento de sequências funciona e como a pontuação para a melhor sequência é calculada. Agora, pode estar surgindo o questionamento: "Por que usar isso é especialmente útil e por que precisamos estudar um algoritmo para isso?"
@@ -218,72 +225,145 @@ A cada etapa feita nos processos passados da ultima seção, talvez não tenha f
 Para alinhar duas sequências, podemos começar do fim: comparar os últimos caracteres e decidir o que fazer com eles.
 Depois, repetimos o mesmo raciocínio para o restante. É assim que o algoritmo divide o problema em partes menores.
 
-Muito abstrato? Vamos exemplificar.
+Nos exercícios anteriores, os alinhamentos foram dados. Mas como poderíamos encontrá-los sozinhos? Para sequências longas, testar todas as combinações é inviável.
 
-Considere as seguintes sequências:
-- Sequência 1: ATC
-- Sequência 2: AG
-
-Para encontrar o alinhamento ótimo, o algoritmo funciona "do fim para o começo". Ele se pergunta: qual é a melhor forma de alinhar os últimos caracteres (C e G)?
-
-Existem três possibilidades para a **última coluna** do alinhamento:
-
-Considere as seguintes sequências. Estamos tentando decidir como alinhar o final delas: o {red}(C) da Sequência 1 e o {red}(G) da Sequência 2.
-
-| Sequência 1 | A | T | C |
-|:---:|:---:|:---:|:---:|
-| **Sequência 2** | **A** | **G** | |
+A resposta é que não testamos todas. Usamos a **recursão** para *construir* o melhor alinhamento.
 
 
-Para encontrar o alinhamento ótimo, o algoritmo funciona "do fim para o começo". Ele se pergunta: qual é a melhor forma de criar a **última coluna** do alinhamento?
 
-Existem três possibilidades, que são efetivamente os ramos da recursão:
+O algoritmo funciona "do fim para o começo". Ele se concentra apenas em decidir a última coluna. Para o "resto", ele confia que a recursão já resolveu e encontrou a melhor pontuação para o subproblema. O problema se resume a: "Eu só preciso decidir a última coluna, e a recursão resolve o sub-problema que eu criar."
 
-O algoritmo é forçado a explorar **todas as 3 possibilidades**:
+Vamos praticar essa ideia.
 
 ---
 
-### Ramo 1:  Alinhar Letra com Letra  ({red}(C) vs {red}(G))
-O algoritmo testa alinhar os dois últimos caracteres.
+??? Atividade
 
-* **Ação (Última Coluna):**
+Vamos revisitar um alinhamento da atividade anterior. Assim, considere:
 
-| Sequência 1 | A | T | {red}(C) |
-|:---:|:---:|:---:|:---:|
-| Sequência 2 | **A** | **G** |**-** |
+* {green}(**Match**): +2
+* {yellow}(**Mismatch**): -1
+* {red}(**Gap**): -3
 
-* **Subproblema Gerado:** O que sobrou para alinhar foi **AT** vs **A**.
+**Alinhamento Completo:**
+| Sequência 1 | A | G | T | C |
+|:---:|:---:|:---:|:---:|:---:|
+| **Sequência 2** | **A** | **-** | **T** | **C** |
 
----
+**OBS:** Vamos *assumir* que o algoritmo já calculou e nos disse que a pontuação ótima para o "resto" (o subproblema de alinhar `AGT` com `A-T`) é **+1**.
 
-### Ramo 2: Alinhar Letra 1 com Gap  ({red}(C) vs {red}(-))
-O algoritmo testa alinhar o caractere da Sequência 1 com um gap.
+**Resto (Subproblema Resolvido):**
 
-| Sequência 1 | A | T | {red}(C) |
-|:---:|:---:|:---:|:---:|
-| Sequência 2 | **A** | {red}(**G**) |{red}(**-**) |
 
-* **Subproblema Gerado:** O que sobrou foi **AT** vs **AG** (pois o **G** não foi "usado").
+1.  Qual é a pontuação **apenas** da última coluna deste alinhamento?
+    ```
+    Seq 1:  C
+    Seq 2:  C
+    ```
 
----
+::: Dica
+Lembre-se que o algoritmo funciona "do fim para o começo". Ele primeiro resolve o "resto" do problema (o subproblema) e depois soma o custo da última ação.
+:::
 
-### Ramo 3:Alinhar Gap com Letra 2  ({red}(-) vs {red}(G))
-O algoritmo testa alinhar um gap com o caractere da Sequência 2.
+::: Gabarito
 
-* **Ação (Última Coluna):**
-   
-| Sequência 1 | A | T | {red}(C) |
-|:---:|:---:|:---:|:---:|
-| Sequência 2 | {red}(**-**)| **A** | {red}(**G**) |
-
-* **Subproblema Gerado:** O que sobrou foi **ATC** vs **A** (pois o **C** não foi "usado").
-
----
-<br>
+1.  **Pontuação da Última Coluna:**
+    A última coluna é `C` alinhado com `C`. Isso é um **Match**, que vale **+2**.
+:::
 
 ???
-Exercício: Assumindo que temos as seguintes pontuações:
-* Match: +1 
+
+??? Atividade 
+
+Usando o mesmo conceito de recursão para o exercicio anterior, qual é a pontuação **total** do alinhamento completo referente a ultima atividade ?
+
+:::Gabarito
+2.  **Pontuação Total:**
+    * Pontuação do Resto (dado): +3
+    * Pontuação da Última Coluna (calculado): +2
+    * **Total:** (+3) + (+2) = **+5**
+
+!!! Atenção
+Observe que **+5** é exatamente o mesmo valor que calculamos "manualmente" para este alinhamento na seção anterior.
+
+Isso confirma a ideia principal: a pontuação de um alinhamento é a soma da pontuação da última ação com a pontuação ótima do subproblema que ela gera, que é justamente o que foi visto durante a disciplina de que uma função recursiva funciona igualmente como um loop.
+!!!
+:::
+
+???
+
+
+
+Ótimo. A atividade anterior nos mostrou *como* a pontuação é somada (`Pontuação Total = Pontuação do Resto + Pontuação da Última Coluna`).
+
+Agora, precisamos responder a pergunta-chave: Como o algoritmo *decide* qual ação tomar? Naquele exercício, a ação (Match) já estava "dado" pelo alinhamento.
+
+Mas o algoritmo, ao começar do zero, não sabe qual é a melhor ação. Ele precisa de uma forma de explorar todas as possibilidades.
+
+??? Atividade
+
+Vamos focar no momento exato em que o algoritmo toma uma decisão.
+Considere as duas sequências que estamos analisando:
+
+| Sequência 1 | A | G | T | {red}(C) |
+|:---:|:---:|:---:|:---:|:---:|
+| **Sequência 2** | **A** | **T** | {red}(**C**) | |
+
+O algoritmo foca **apenas** no final (em vermelho). Pense em como poderíamos construir a **última coluna** do alinhamento.
+
+Quais são todas as ações possíveis que podemos tomar para alinhar esses últimos caracteres?
+
+::: Dica
+Pense nas três operações básicas de alinhamento que definimos na seção anterior e que o algoritmo não sabe que existe um gap na sequência 2, então ele vai usar as letras que existem, mesmo que não estejam alinhadas perfeitamente.
+:::
+
+::: Gabarito
+Existem 3 (e apenas 3) escolhas possíveis para formar a última coluna:
+
+1.  **Alinhar Letra com Letra:** (Neste caso, alinhar o {red}(**C**) da Seq 1 com o {red}(**C**) da Seq 2).
+2.  **Alinhar Letra 1 com Gap:** (Alinhar o {red}(**C**) da Seq 1 com um {yellow}(**-**)).
+3.  **Alinhar Gap com Letra 2:** (Alinhar um {yellow}(**-**) com o {red}(**C**) da Seq 2).
+
+O algoritmo é forçado a explorar todas as três para ver qual delas leva à melhor pontuação total.
+:::
+
+???
+
+
+Na atividade anterior, vimos que para resolver o problema de alinhar `AGTC` e `ATC`, o algoritmo explora 3 possibilidades (subproblemas):
+
+* **Escolha 1:** Resolver o subproblema `AGT` vs `AT`.
+* **Escolha 2:** Resolver o subproblema `AGT` vs `ATC`.
+* **Escolha 3:** Resolver o subproblema `AGTC` vs `AT`.
+
+
+??? Atividade
+Agora, vamos focar apenas na **Escolha 1**. O algoritmo agora precisa encontrar a pontuação ótima para o subproblema `AGT` vs `AT`.
+
+Dessa forma, para resolver *este novo subproblema* (alinhar `AGT` e `AT`), quantas novas escolhas (possibilidades) o algoritmo terá que explorar?
+
+::: Dica
+A lógica se repete. O algoritmo aplica exatamente o mesmo processo para o subproblema que aplicou ao problema original.
+:::
+
+::: Gabarito
+A resposta é **3**.
+
+O algoritmo é recursivo. Para resolver *qualquer* problema de alinhamento, ele aplica as mesmas 3 escolhas universais:
+1.  Alinhar os últimos caracteres (neste caso, `T` vs `T`).
+2.  Alinhar o último da *primeira* sequência(`AGT`) com um gap (`T` vs `-`).
+3.  Alinhar um gap com o último de segunda sequência (`-` vs `T`).
+
+Isso significa que o problema original se divide em 3 possibilidades. Cada uma dessas 3 se divide em **outras 3**, totalizando 9 possibilidades após apenas dois níveis.
+:::
+???
+
+Isso parece uma estrutura muito conhecida por nós. Te lembra ... uma árvore de decisões?
+Vamos ver como essa árvore de decisões se comporta quando juntamos todos os conceitos explorados até agora.
+
+??? Exercício
+Assumindo que temos as seguintes pontuações:
+* Match: +1
 * Mismatch: -1
 * Gap: -2
 
@@ -291,25 +371,25 @@ Determine a pontuação total para cada uma das três opções (ramos) da recurs
 
 ::: Gabarito
 
-Para resolver, calculamos a pontuação de cada ramo recursivo, que é o **custo da ação** +  **pontuação ótima** do subproblema.
+Para resolver, calculamos a pontuação de cada ramo recursivo, que é o **custo da ação** + **pontuação ótima** do subproblema.
 
 Isso exige que primeiro saibamos as pontuações ótimas dos subproblemas (calculados recursivamente):
-* `Pontuação("A" vs "A")` = +1 (pois um match é a melhor opção)
-* `Pontuação("A" vs "AG")` = -1 (o alinhamento ótimo é `A-` vs `AG`, com custo `Match(A,A)` + `Gap(-,G)` = +1 + (-2) = -1)
-* `Pontuação("AG" vs "A")` = -1 (o alinhamento ótimo é `AG` vs `A-`, com custo `Match(A,A)` + `Gap(G,-)` = +1 + (-2) = -1)
+* Pontuação(A vs A) = +1 (pois um match é a melhor opção)
+* Pontuação(A vs AG) = -1 (o alinhamento ótimo é A- vs AG, com custo `Match(A,A)` + `Gap(-,G)` = +1 + (-2) = -1)
+* Pontuação(AG vs A) = -1 (o alinhamento ótimo é `AG` vs `A-`, com custo `Match(A,A)` + `Gap(G,-)` = +1 + (-2) = -1)
 
 Agora, podemos calcular a pontuação de cada ramo do problema principal (`AG` vs `AG`):
 
 **Ramo 1: Alinhar Letra com Letra ({red}(G) vs {red}(G))**
-* **Cálculo:** `Custo(Match G,G)` + `Pontuação("A" vs "A")`
+* **Cálculo:** Custo(Match G,G) + Pontuação(A vs A)
 * **Pontuação:** (+1) + (+1) = **+2**
 
 **Ramo 2: Inserir Gap na Seq. 2 ({red}(G) vs {red}(-))**
-* **Cálculo:** `Custo(Gap G,-)` + `Pontuação("A" vs "AG")`
+* **Cálculo:** Custo(Gap G,-) + Pontuação(A vs AG)
 * **Pontuação:** (-2) + (-1) = **-3**
 
 **Ramo 3: Inserir Gap na Seq. 1 ({red}(-) vs {red}(G))**
-* **Cálculo:** `Custo(Gap -,G)` + `Pontuação("AG" vs "A")`
+* **Cálculo:** Custo(Gap -,G) + Pontuação(AG vs A)
 * **Pontuação:** (-2) + (-1) = **-3**
 
 O algoritmo escolheria o **Ramo 1**, pois **+2** é a pontuação máxima entre (+2, -3, -3).
@@ -317,31 +397,40 @@ O algoritmo escolheria o **Ramo 1**, pois **+2** é a pontuação máxima entre 
 ???
 
 
+O exercício anterior nos mostrou a lógica que o algoritmo usa para decidir em *um único nó* da recursão.
 
-Ele repete esse processo recursivamente para os subproblemas até que ambas as sequências acabem.
-O algoritmo então escolhe a opção que resulta na maior pontuação total (somando o *score* da escolha atual com o *score* ótimo do subproblema que ela gerou). Ele repete esse processo recursivamente até que ambas as sequências "acabem" (cheguem ao início).
+Agora, vamos visualizar o que acontece quando expandimos essa lógica para o problema inteiro. O diagrama abaixo é a **árvore de decisão** para o nosso problema de alinhar `AT` e `AG`, um caso mais simplificado, para que a arvore não fique enorme.
 
-Talvez você esteja se questionando: a recursão é uma boa abordagem para esse problema?
+![](arvore_desprog.png)
+
+Vamos analisar a árvore:
+
+1.  O problema "raiz" (AT, AG) se divide nos 3 subproblemas que identificamos (um para cada seta): (A, AG), (AT, A), e (A, A).
+2.  Para encontrar a melhor pontuação para (AT, AG), o algoritmo **precisa** resolver todos os três subproblemas.
+3.  Mas agora, observe o que acontece:
+    * Para resolver o ramo da esquerda, (A, AG), o algoritmo vai se dividir novamente. Uma de suas ações (- vs G) irá gerar o subproblema (A, A).
+    * Para resolver o ramo do meio, (AT, A), o algoritmo também vai se dividir. Uma de suas ações (T vs -) também irá gerar o subproblema (A, A).
+
+!!! Atenção
+**Subproblemas Sobrepostos**
+
+O que o diagrama prova é que o algoritmo é forçado a calcular a pontuação ótima para o subproblema (A, A) **múltiplas vezes** (uma vez no ramo da direita, e novamente dentro dos ramos da esquerda e do meio).
+
+A recursão pura é extremamente infecificiente: ela não tem memória. Ela recalcula o custo para o *mesmo par de subsequências* várias e várias vezes em galhos diferentes da árvore.
+
+É essa repetição desnecessária, chamada de **subproblemas sobrepostos**, que torna a abordagem recursiva pura tão ineficiente.
+!!!
+
+Assim, já concluimos que a eficiencia do algoritmo recursivo é muito baixa. Mas quão baixa exatamente?
 
 ??? Atividade
 
 Considerando *m* e *n* os tamanhos das duas sequências a serem alinhadas, determine a **complexidade de tempo do algoritmo recursivo**.
 
-::: Dica
-Considere que na chamada recursiva pelo menos uma das sequências será reduzida. Dessa forma, no pior caso, são quantos passos até o caso base?
-:::
-
 ::: Gabarito
 No pior caso, a chamada recursiva reduz apenas uma das sequências por vez (ou seja, alinha o caractere de uma com um gap na outra). Nesse caso, até o caso base (ambas as sequências vazias), são ***m* + *n* chamadas**.  
 
 Para cada chamada, existem 3 possibilidades, que geram **3 chamadas recursivas**. Portanto, a complexidade do algoritmo é **$O(3^{m+n})$**.
-
-O diagrama ilustra a recursão:
-
-<div style="text-align: center;">
-<img src="exemplos/diagrama-recursao.png" width="500"/>
-</div>
-
 
 !!! Atenção
 **Subproblemas Sobrepostos**
@@ -354,82 +443,164 @@ Para sequências longas, o número de cálculos repetidos cresce exponencialment
 
 ???
 
+
+
 Algoritmo de Needleman-Wunsch
 ---
-Como vimos na seção anterior, a complexidade do algoritmo recursivo torna-o impraticável para sequências maiores.
-
-Precisamos, portanto, de outra forma menos custosa para fazer o alinhamento, e é aí que entra o algoritmo de Needleman-Wunsch.
-
-Para que nós tenhamos um norte de como o algorítmo funciona, é extremamente importante que ter um entendimento claro dessas premissas: 
-
-- Trabalhamos com uma matriz *m* x *n* 
-
-- Definimos os valores das bordas com valores dos pesos de um gap, em que a cada celula, aumentamos o peso.
-
-- A ideia é calcular a pontuação das comparações entre as palavras usando **duas** regras: 
 
 
-1. Para comparar gaps, analisamos as celulas a esquerda e ao topo da celula atual. 
+Na última atividade, vimos que o algoritmo recursivo tenta **todas as possibilidades possíveis**, mas de forma repetitiva. Muitos subproblemas aparecem várias vezes na árvore, e isso o torna ineficiente.
 
-2. Para calcular matches e mismatches, usamos as celulas da diagonal da celula atual.
+!!! Importante
 
+O algoritmo tenta todas as possibilidades pois o objetivo do alinhamento é **encontrar a melhor forma de encaixar duas sequências**.  
+Mas, antes de saber qual é a melhor, o algoritmo precisa **explorar todas as formas possíveis de alinhá-las**, só assim ele tem certeza de que não deixou passar nenhuma opção melhor.
 
 !!!
-Talvez, você tenha ficado confuso. Faz sentido, não é trivial. 
-O exemplo pode esclarecer melhor:
+
+Agora vamos pensar: será que existe um jeito de **organizar** essas possibilidades, sem perder nenhuma?
+
+
+??? Atividade:
+
+Como poderíamos organizar os alinhamentos possíveis das sequências `AT` e `AG` em uma matriz?
+
+::: Gabarito
+Podemos representar os alinhamentos em uma matriz onde as linhas representam os caracteres da primeira sequência e as colunas representam os caracteres da segunda sequência.
+
+
+|  | A | T |
+|:---:|:---:|:---:|
+| **A** | AA | AT | 
+| **G** | GA | GT | 
+
+
+!!! Atenção
+
+Compare com a árvore de recursão que fizemos anteriormente. O que está faltando nessa matriz para que ela represente todos os alinhamentos possíveis?
+
 !!!
 
-<div style="text-align: center;">
-<img src="exemplos/calculo.png" width="300"/>
-</div>
+:::
+
+???
 
 
-Mas espere, e quanto ao segundo bullet point, ainda não ficou claro, né?
+Para que possamos organizar todos os alinhamentos possíveis, precisamos adicionar **gaps** nas sequências. Assim, a matriz deve incluir linhas e colunas adicionais para representar esses gaps.
 
-Infelizmente, você faz engenharia e nada vem tão simples. 
+??? Atividade: Adicionando os Gaps
 
-Assim, vou propor duas reflexões especialmente importantes: 
-
-??? Reflexão 1
-
-Qual o motivo de existirem essas três setas que vem da diagonal, da esquerda e do topo, como mostrado na ultima figura para o cálculo da pontuação?
-
+Como podemos modificar a matriz anterior para incluir os gaps e representar todos os alinhamentos possíveis entre as sequências `AT` e `AG`?
 
 ::: Dica
-São três possibilidades, três pontuações, e cada recursão tinha três ramos...
+
+Observe na árvore recursiva onde os gaps poderiam ser inseridos nas sequências para criar diferentes alinhamentos. Pense em como representar essas possibilidades em uma estrutura tabular.
+
 :::
 
 ::: Gabarito
-O motivo para fazermos isso é o fato de estarmos buscando pela maior pontuação dentro de cada comparação entre gap vs letra, letra vs letra, letra vs gap. Assim, já ganhamos uma intuição do porque esse modelo é mais eficiente.
-::: 
+Podemos adicionar uma linha e uma coluna extras para representar os gaps. A matriz modificada ficaria assim:
+
+|   | - | A | T |
+|:---:|:---:|:---:|:---:|
+| **-** | - - | -A | -T |
+| **A** | A- | AA | AT |
+| **G** | G- | GA | GT |
+
+:::
 
 ???
 
-??? Reflexão 2
 
-Qual o motivo de inicializarmos a matriz de alinhamento com esses valores nas linhas e nas colunas? 
+Agora que entendemos como organizar os alinhamentos possíveis em uma matriz, vamos entender onde a matemática do algoritmo de Needleman-Wunsch entra em cena.
 
-<div style="text-align: center;">
-<img src="exemplos/pesos.png" width="300"/>
-</div>
+---
 
+**Da Recursão à Tabela**
+
+
+Na recursão, o algoritmo precisava **decidir a cada passo** o que fazer com o próximo par de caracteres. Ele fazia isso comparando três caminhos possíveis:
+
+1. Alinhar os dois caracteres (match ou mismatch).  
+2. Alinhar o caractere da sequência 1 com um gap.  
+3. Alinhar o caractere da sequência 2 com um gap.
+
+Cada escolha levava o algoritmo a um **subproblema menor**, que seria resolvido recursivamente.
+
+Agora, observe algo interessante: esses três caminhos são exatamente os **vizinhos** de cada célula na matriz: a diagonal (match ou mismatch), o topo (gap na primeira sequência) e a esquerda (gap na segunda sequência).
+
+!!! Importante
+A tabela faz **a mesma coisa que a recursão**, mas de forma organizada.  
+Em vez de chamar as funções de novo, ela apenas **olha as pontuações já calculadas** nas células vizinhas. 
+!!!
+
+
+??? Atividade: Ligando a recursão à tabela
+
+Na célula `AA`, quais seriam os três caminhos possíveis para chegar até ela?  
+De onde viria cada um deles na matriz?
+
+|   | - | A | T |
+|:---:|:---:|:---:|:---:|
+| **-** | - - | -A | -T |
+| **A** | A- | AA | AT |
+| **G** | G- | GA | GT |
 
 ::: Dica
-Qual o custo de alinhar uma sequência qualquer de *m* caracteres com uma sequência vazia?
+
+Olhe na árvore de recursão e veja quais subproblemas geraram o alinhamento `AA`.
 :::
 
-::: Gabarito 
-A inicialização da matriz com penalidades de gap cumulativas não é arbitrária. Ela é a solução de Programação Dinâmica para os casos base.
+::: Gabarito
+Os três caminhos possíveis são:
+
+- **Diagonal:** vindo de `–x–` → comparar `A` com `A` (match).  
+- **Cima:** vindo de `–xA` → inserir um gap na segunda sequência.  
+- **Esquerda:** vindo de `Ax–` → inserir um gap na primeira sequência.
+
+A pontuação da célula `AA` será a **maior pontuação** entre esses três caminhos,  
+somando o custo (match, mismatch ou gap) ao valor do subproblema anterior.
 :::
 
 ???
 
-??? Exemplo
-A sequência de imagens a seguir representa o preenchimento da matriz das sequências **ATCGAGC** e **ATGAC** utilizando o algoritmo de Needleman-Wunsch com as seguintes pontuações:
+---
 
+**Construção da Matriz de Alinhamento**
+
+
+
+Ao construir a matriz de alinhamento, o algoritmo armazena as pontuações parciais em cada célula. Cada célula representa a melhor pontuação possível para alinhar as subsequências correspondentes das duas sequências até aquele ponto.
+
+É por isso que, ao calcular cada célula, olhamos para **diagonal, cima e esquerda**, são exatamente os três ramos que a recursão explorava.
+
+Não ficou claro? Vamos praticar.
+
+??? Exercício: Construção da Matriz
+
+Vamos detalhar o processo de construção da matriz considerando as sequências `AT` e `AG`, com as seguintes pontuações:
 - Match: +1
 - Mismatch: -1
 - Gap: -2
 
-:pontuacoes
+::: Dica
+Pense em como inicializar a matriz com os valores de gap e como preencher cada célula com base nas pontuações dos vizinhos (diagonal, cima, esquerda). Considere o custo de cada ação (match, mismatch, gap) ao calcular a pontuação para cada célula.
+:::
+
+
+::: Gabarito
+:atag
+:::
 ??? 
+
+
+**Conclusão**
+
+
+A recursão e a tabela fazem a **mesma sequência de decisões**.  
+A diferença é que, na recursão, o algoritmo **refaz os cálculos** toda vez, enquanto na tabela ele **guarda o resultado** de cada subproblema.
+
+Ao preencher a matriz, o algoritmo calcula a melhor pontuação para cada célula com base nas pontuações dos vizinhos (diagonal, cima, esquerda) e o custo associado a cada ação (match, mismatch, gap).
+
+Dessa forma, a matriz é construída de maneira sistemática, permitindo que o algoritmo encontre o alinhamento ótimo ao final do processo.
+
